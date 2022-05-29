@@ -1,7 +1,7 @@
 import psutil
 
 
-def is_running(search_str: str, attrs: list = None) -> int:
+def is_running(search_str: str, attrs: list[str] = None) -> int:
     """ Search for a process that has the desired string in any of its parameters. By default, the search is performed
     in the launch line .cmdline()
     List possible attrs: list(psutil.Process().as_dict().keys())
@@ -29,7 +29,7 @@ def is_running(search_str: str, attrs: list = None) -> int:
 #               internal functions              #
 #################################################
 
-def _filter_invalid_attrs(process: psutil.Process, attrs: list) -> list:
+def _filter_invalid_attrs(process: psutil.Process, attrs: list[str]) -> list:
     """ Filter bad attributes that will prevent results from join into a search string """
     result = []
     for attr in attrs:
