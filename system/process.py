@@ -2,12 +2,12 @@ import psutil
 
 
 def is_running(search_str: str, attrs: list = None) -> int:
-    """ Поиск процесса у которого в каких-либо параметрах есть искомая строка. По-умолчанию поиск производится
-    в сроке запуска .cmdline()
-    Список доступных атрибутов: list(psutil.Process().as_dict().keys())
-    :param search_str: строка для поиска
+    """ Search for a process that has the desired string in any of its parameters. By default, the search is performed
+    in the launch line .cmdline()
+    List possible attrs: list(psutil.Process().as_dict().keys())
+    :param search_str: search string
     :param attrs: см. https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
-    :return: 0 если нет такого процесса, или pid если есть и -1 если в attrs только несуществующий параметр
+    :return: 0 if there is no such process, or pid if there is, and -1 if non-existent parameter in attrs
     """
     if attrs is None:
         attrs = ['cmdline']
