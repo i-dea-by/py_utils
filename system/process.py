@@ -18,7 +18,7 @@ def is_running(search_str: str, attrs: list[str] = None) -> int:
             return -1
     for process in psutil.process_iter(attrs):
         try:
-            if search_str in ' '.join(_filter_invalid_attrs(process, attrs)):
+            if search_str in ' '.join(_filter_invalid_attrs(process, attrs)).lower():
                 return process.pid
         except psutil.Error:
             pass
