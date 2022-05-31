@@ -22,9 +22,13 @@ def get_external_ip(host: str = '', ipv6_flag: bool = False) -> str:
 def get_internal_ip() -> str:
     """ Return internal IP
 
-    :return: String with internal IP
+    :return: String with internal IP or empty string if any exception rised
     """
-    return socket.gethostbyname(socket.gethostname())
+    try:
+        result = socket.gethostbyname(socket.gethostname())
+    except Exception:
+        result = ''
+    return result
 
 
 if __name__ == '__main__':
