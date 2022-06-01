@@ -6,8 +6,8 @@ from random import randint
 
 import click
 
-from .easy_logger import easy_logger as logger
-from .now_time import get_now_time
+from easy_logger import easy_logger as logger
+from now_time import get_now_time
 
 
 class ConnectionResult(Enum):

@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from .now_time import get_now_time
+from now_time import get_now_time
 
 
 class EasyLogger:
