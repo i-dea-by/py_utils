@@ -1,1 +1,1 @@
-d:\programming\pyProjects\scheduler_tasks\venv\Scripts\pythonw.exe d:\programming\pyProjects\scheduler_tasks\the_bat.pyw 
+d:\programming\pyProjects\py_utils\venv\Scripts\pythonw.exe d:\programming\pyProjects\py_utils\scheduler_tasks\the_bat.pyw
