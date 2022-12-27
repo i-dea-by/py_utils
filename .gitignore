@@ -31,5 +31,6 @@ dont_vcs/
 out/
 old/
 .mypy_cache/
-
-
+--/
+--*.*
+_*.*
