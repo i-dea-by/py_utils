@@ -10,6 +10,7 @@ lxml
 ```
 
 ### Примеры результата работы
+Если `print_log=True`:
 ```
 date:  : 2021-05-03 16:55:11 Mon
 to:    : <mail>
@@ -24,4 +25,5 @@ subject: Uber – отчёт о поездке 3 мая 2021 г.
 price  : 5.20
 ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 ```
+Если `print_log=False`:
 ![alt-текст](https://github.com/i-dea-by/py_utils/blob/master/uber_cost_by_year/uber.gif?raw=true "Working")
