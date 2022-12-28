@@ -3,12 +3,12 @@
 
 **[uber_cost_by_year](https://github.com/i-dea-by/py_utils/tree/master/uber_cost_by_year)** - cкрипт анализирует mbox-файл полученный из экспорта гугловой почты, ищет письма от Убера за указанный год и суммирует стоимость поездок взятых из тела письма
 
+**[scheduler_tasks](https://github.com/i-dea-by/py_utils/tree/master/scheduler_tasks)** - скрипты для запуска в Планировщике заданий Windows
 
 #### word  
 ```
 скрипты анализа вордовский файлов
 ```
-
 
 #### renamer
 ```
