@@ -21,7 +21,7 @@ def open_key(write: bool = False) -> winreg.HKEYType | bool:
 
 def get_key() -> str | bool:
     """ Запрашивает значение ключа из реестра и возвращает его. Если происходит ошибка возвращает False
-    :return:
+    :return: значение ключа или False в случае если будет ошибка при открытии ключа
     """
     key = open_key()
     if key:
@@ -34,7 +34,7 @@ def get_key() -> str | bool:
 def set_key(new_value: str = FIND_STR) -> bool:
     """ Устанавливает значение ключа реестра. Если удачно, возвращает True
     :param new_value: новое значение ключа
-    :return:
+    :return: True если удачно, False если не удастся открыть ключ на запись
     """
     key = open_key(write=True)
     if key:
