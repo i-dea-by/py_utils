@@ -24,4 +24,4 @@ subject: Uber – отчёт о поездке 3 мая 2021 г.
 price  : 5.20
 ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 ```
-![alt-текст](https://github.com/i-dea-by/py_utils/tree/master/uber_cost_by_year/uber.gif "Working")
+![alt-текст](https://github.com/i-dea-by/py_utils/blob/master/uber_cost_by_year/uber.gif?raw=true "Working")
