@@ -6,7 +6,7 @@ REGISTRY_KEY = r'SOFTWARE\Clients\Mail'
 
 
 def open_key(write: bool = False) -> winreg.HKEYType | bool:
-    """ Открывает ключ реестра для чтения и возвращает его или False если неудачно
+    """ Открывает ключ реестра для чтения, если write=False и возвращает его или False если неудачно.
         Если write=True открывает на запись
     :param write: флаг открытия на запись
     :return: ключ реестра типа winreg.HKEYType или False
