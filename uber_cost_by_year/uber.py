@@ -12,8 +12,8 @@ from operator import attrgetter
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from uber_cost_by_year.json_files import save_as_jsonfile, load_jsonfile
-from uber_cost_by_year.ride_data import RideData
+from uber_cost_by_year.json_files import PathLike, save_as_jsonfile, load_jsonfile
+from uber_cost_by_year.typings import RideData
 
 
 def str2datetime(time_string: str) -> datetime:
@@ -21,6 +21,7 @@ def str2datetime(time_string: str) -> datetime:
     :param time_string:
     :return: datetime
     """
+    # форматы используемые в письмах
     time_formats = ['%a, %d %b %Y %H:%M:%S %z', '%a, %d %b %Y %H:%M:%S %z (%Z)']
     for fmt in time_formats:
         try:
@@ -91,13 +92,14 @@ def parse_ride_cost(message: str) -> float:
     if price_raw:
         price = price_raw.replace('\u202f', ' ').replace('\u2006', ' ').replace(',', '.').split()[0]
         return float(price)
+    # в 22 году иногда приходили глючные письма
     return .0
 
 
-def collect_rides(year: int = 2021, print_log: bool = False, mbox_path: str = '') -> list[RideData]:
-    """ Проходит по всем письмам в файле .mbox, находит письма от убера и сортирует их по дате
+def collect_rides(year: int, mbox_path: PathLike, print_log: bool = False) -> list[RideData]:
+    """ Проходит по всем письмам в файле .mbox, находит письма от убера за нужный год и сортирует их по дате
 
-    :param year: год за который ищутся письма, по умолчанию равно 2021
+    :param year: год за который ищутся письма
     :param print_log: если True - печатает данные писем, если False - выводит строку прогресса
     :param mbox_path: путь до файла .mbox относительно файла скрипта
     :return: float, сумма денег
@@ -125,10 +127,17 @@ def collect_rides(year: int = 2021, print_log: bool = False, mbox_path: str = ''
 
 if __name__ == '__main__':
     year = 2022
+    mbox_file = 'dont_vcs/inbox2022.mbox'
 
-    # rides = collect_rides(year, print_log=False, mbox_path='dont_vcs/inbox2022.mbox')
+    print('Год : ', year)
+    print('Файл: ', mbox_file)
+
+    rides = collect_rides(year, mbox_path=mbox_file, print_log=False)
+
+    # # сохраним полученные данные
     # save_as_jsonfile(rides, f"_{year}.json")
-
-    rides = load_jsonfile(f"_{year}.json")
+    #
+    # # загрузим сохраненные данные
+    # rides = load_jsonfile(f"_{year}.json")
 
     print('Игого = ', sum(ride.ride_cost for ride in rides))
