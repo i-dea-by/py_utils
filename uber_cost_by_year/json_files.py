@@ -1,73 +1,7 @@
-import dataclasses
 import json
-from datetime import datetime
-from pathlib import Path
-from typing import TypeVar, Any
+from typing import Any
 
-from uber_cost_by_year.ride_data import RideData
-
-PathLike = TypeVar("PathLike", str, Path)
-
-
-# --------------- JSON serialize/deserialilze ---------------
-
-class _JSONencoder(json.JSONEncoder):
-    """ Класс для сериализации json """
-
-    def default(self, obj):
-        # если попался dataclass
-        if dataclasses.is_dataclass(obj):
-            return dataclasses.asdict(obj)
-        # если попался datetime
-        if isinstance(obj, datetime):
-            return obj.replace(tzinfo=None).isoformat()
-        if isinstance(obj, Path):
-            return obj.name
-        return super().default(obj)
-
-
-class _JSONdecoder(json.JSONDecoder):
-    """ Класс для десериализации json """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(object_hook=self.object_hook, *args, **kwargs)
-
-    @staticmethod
-    def try_datetime(value):
-        try:
-            result = datetime.fromisoformat(value)
-        except (ValueError, TypeError):
-            return False
-        return result
-
-    @staticmethod
-    def try_ride_data(value: dict):
-        # если не None значит это данные поездки
-        if value.get('ride_dt'):
-            return RideData(
-                mail_to=value['mail_to'],
-                mail_from=value['mail_from'],
-                subject=value['subject'],
-                ride_dt=_JSONdecoder.try_datetime(value['ride_dt']),
-                ride_week_day=value['ride_week_day'],
-                ride_cost=value['ride_cost'],
-            )
-        return False
-
-    @staticmethod
-    def object_hook(obj):
-        """ Перебор объектов на предмет того, что это за структура """
-
-        if result := _JSONdecoder.try_ride_data(obj):
-            return result
-
-        result = {}
-        for key, value in obj.items():
-            if _value := _JSONdecoder.try_datetime(value):
-                result[key] = _value
-            else:
-                result[key] = value
-        return result
+from uber_cost_by_year.typings import PathLike, _JSONencoder, _JSONdecoder
 
 
 def save_as_jsonfile(obj: Any, filename: PathLike):
