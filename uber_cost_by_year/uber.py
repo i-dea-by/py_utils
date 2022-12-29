@@ -4,7 +4,6 @@
 """
 
 import mailbox
-import sys
 from datetime import datetime
 from email.parser import BytesParser
 from email.policy import default
@@ -12,47 +11,19 @@ from email.policy import default
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-timeformat = '%a, %d %b %Y %H:%M:%S %z'
-timeformatGMT = '%a, %d %b %Y %H:%M:%S %z (%Z)'
 
-# это для того если используется перенаправление вывода в файл при вызове из териминала, типа "uber.py > 1.txt"
-# просто глюки начинаются поскольку в винде такое перенаправление идет с кодировкой win-1251
-sys.stdin.reconfigure(encoding='utf-8')
-sys.stdout.reconfigure(encoding='utf-8')
-
-
-def create_date_time(time_string):
-    if is_time_format(time_string, timeformat):
-        dt = datetime.strptime(time_string, timeformat)
-        return dt
-
-    elif is_time_format(time_string, timeformatGMT):
-        dt = datetime.strptime(time_string, timeformatGMT)
-        return dt
-
-    else:
-        print(time_string)
-        raise
-
-
-def get_date(dt):
-    return dt.date().isoformat()
-
-
-def get_time(dt):
-    return dt.time().isoformat()
-
-
-def get_day_of_week(dt):
-    return dt.strftime("%a")
-
-
-def is_time_format(input, format):
-    try:
-        datetime.strptime(input, format)
-        return True
-    except ValueError:
-        print(input)
+def str2datetime(time_string: str) -> datetime:
+    """ Преобразует строку в формат datetime. Если не удается вызывает исключение ValueError
+    :param time_string:
+    :return: datetime
+    """
+    time_formats = ['%a, %d %b %Y %H:%M:%S %z', '%a, %d %b %Y %H:%M:%S %z (%Z)']
+    for fmt in time_formats:
+        try:
+            return datetime.strptime(time_string, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"Неведомый формат времени: {time_string}")
 
 
 def get_mail_content(message):
@@ -73,48 +44,65 @@ def get_mail_content(message):
     return content
 
 
-def get_uber_summ_by_year(year, print_log=False):
+def log_printer(message, dt, price):
+    """ Функция печати данных из письма
+    :param message:
+    :param dt:
+    :param price: цена поездки
+    :return:
     """
-    возвращает сумму за год по письмам из Uber. если print_log=True тогда печатает. но тогда начнутся глюки с tqdm
+    mail_to = message.get('to')
+    subject = message.get('subject', '<Unknown>')
+    mail_from = message.get('from')
+
+    date = dt.date().isoformat()
+    time = dt.time().isoformat()
+    week_day = dt.strftime("%A")
+
+    print(f"date:  : {date}, {time}, {week_day}\n"
+          f"to:    : {mail_to}\n"
+          f"from   : {mail_from}\n"
+          f"subject: {subject}\n"
+          f"price  : {price}\n"
+          f"{'-' * 60}")
+
+
+def get_price(message):
+    soup = BeautifulSoup(message, 'lxml')
+    price_raw = soup.find('td', class_='check__value check__value_type_price').text.strip()
+    price = price_raw.replace('\u202f', ' ').replace('\u2006', ' ').replace(',', '.').split()[0]
+    return price
+
+
+def get_uber_summ_by_year(year: int = 2021, print_log: bool = False, mbox_path: str = '') -> float:
+    """ Проходит по всем письмам в файле .mbox находит письма от убера
+
+    :param year: год за который ищутся письма, по умолчанию равно 2021
+    :param print_log: если True - печатает данные писем, если False - выводит строку прогресса
+    :param mbox_path: путь до файла .mbox относительно файла скрипта
+    :return: float, сумма денег
     """
-    mbox = mailbox.mbox('dont_vcs/inbox.mbox', factory=BytesParser(policy=default).parse)
+    mbox = mailbox.mbox(mbox_path, factory=BytesParser(policy=default).parse)
 
     result = 0
 
-    loop_source = mbox if print_log else tqdm(mbox, ncols=100)
-
+    loop_source = mbox if print_log else tqdm(mbox, ncols=80)
     for message in loop_source:
         mail_date = message.get('date')
-        mail_to = message.get('to')
         mail_from = message.get('from')
-
-        dt = create_date_time(mail_date)
-        date = get_date(dt)
-        time = get_time(dt)
-        week_day = get_day_of_week(dt)
+        dt = str2datetime(mail_date)
 
         if 'Uber' in mail_from and dt.year == year:
-            print("date:  :", date, time, week_day) if print_log else []
-            print("to:    :", mail_to) if print_log else []
-            print("from   :", mail_from) if print_log else []
-
-            subject = message.get('subject')
-            print("subject:", 'None' if subject is None else subject) if print_log else []
-
             content = get_mail_content(message)
-            soup = BeautifulSoup(content, 'lxml')
-
-            price_raw = soup.find('td', class_='check__value check__value_type_price').text.strip()
-            price = price_raw.replace('\u202f', ' ').replace('\u2006', ' ').replace(',', '.').split()[0]
-            print(f'price  : {price}') if print_log else []
-
+            price = get_price(content)
             result += float(price)
 
-            # print("content:", content)
-            print("–" * 60) if print_log else []
+            if print_log:
+                log_printer(message, dt, price)
+
     return result
 
 
 if __name__ == '__main__':
-    year_sum = get_uber_summ_by_year(2021)
+    year_sum = get_uber_summ_by_year(2021, print_log=True, mbox_path='dont_vcs/inbox.mbox')
     print('Игого = ', year_sum)
