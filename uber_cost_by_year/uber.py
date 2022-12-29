@@ -96,19 +96,21 @@ def parse_ride_cost(message: str) -> float:
     return .0
 
 
-def collect_rides(year: int, mbox_path: PathLike, print_log: bool = False) -> list[RideData]:
-    """ Проходит по всем письмам в файле .mbox, находит письма от убера за нужный год и сортирует их по дате
+def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> list[RideData]:
+    """ Проходит по всем письмам в файле .mbox, находит письма от убера за нужный год,
+    собирает их и сортирует их по дате
 
     :param year: год за который ищутся письма
     :param print_log: если True - печатает данные писем, если False - выводит строку прогресса
-    :param mbox_path: путь до файла .mbox относительно файла скрипта
-    :return: float, сумма денег
+    :param mbox_file: путь до файла .mbox относительно файла скрипта
+    :return: список с данными писем убера
     """
-    mbox = mailbox.mbox(mbox_path, factory=BytesParser(policy=default).parse)
+    mbox = mailbox.mbox(mbox_file, factory=BytesParser(policy=default).parse)
+
     result_cost = 0
     result_data = []
 
-    for message in tqdm(mbox, ncols=80):
+    for message in tqdm(mbox, ncols=80, desc='Обработка писем'):
         message_data = get_data(message)
         if 'uber' in message_data.mail_from.lower() and message_data.ride_dt.year == year:
             content = get_mail_content(message)
@@ -130,9 +132,9 @@ if __name__ == '__main__':
     mbox_file = 'dont_vcs/inbox2022.mbox'
 
     print('Год : ', year)
-    print('Файл: ', mbox_file)
+    print(f"Загрузка файла {mbox_file} ...")
 
-    rides = collect_rides(year, mbox_path=mbox_file, print_log=False)
+    rides = collect_rides(year, mbox_file=mbox_file, print_log=False)
 
     # # сохраним полученные данные
     # save_as_jsonfile(rides, f"_{year}.json")
