@@ -59,7 +59,7 @@ class _JSONdecoder(json.JSONDecoder):
     @staticmethod
     def try_ride_data(value: dict):
         # если не None значит это данные поездки
-        if value.get('ride_dt'):
+        if value.get('ride_dt') is not None:
             return RideData(
                 mail_to=value['mail_to'],
                 mail_from=value['mail_from'],
