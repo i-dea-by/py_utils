@@ -57,7 +57,7 @@ class CustomJSONdecoder(json.JSONDecoder):
                 mail_to=value['mail_to'],
                 mail_from=value['mail_from'],
                 subject=value['subject'],
-                ride_dt=_CustomJSONdecoder.try_datetime(value['ride_dt']),
+                ride_dt=CustomJSONdecoder.try_datetime(value['ride_dt']),
                 ride_week_day=value['ride_week_day'],
                 ride_cost=value['ride_cost'],
             )
@@ -67,12 +67,12 @@ class CustomJSONdecoder(json.JSONDecoder):
     def object_hook(obj):
         """ Перебор объектов на предмет того, что это за структура """
 
-        if result := _CustomJSONdecoder.try_ride_data(obj):
+        if result := CustomJSONdecoder.try_ride_data(obj):
             return result
 
         result = {}
         for key, value in obj.items():
-            if _value := _CustomJSONdecoder.try_datetime(value):
+            if _value := CustomJSONdecoder.try_datetime(value):
                 result[key] = _value
             else:
                 result[key] = value
