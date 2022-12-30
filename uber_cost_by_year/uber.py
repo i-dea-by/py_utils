@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from uber_cost_by_year.json_files import PathLike, save_as_jsonfile, load_jsonfile
-from uber_cost_by_year.typings import RideData
+from uber_cost_by_year.typings import RideData, CustomJSONencoder, CustomJSONdecoder
 
 
 def str2datetime(time_string: str) -> datetime:
@@ -137,9 +137,9 @@ if __name__ == '__main__':
     rides = collect_rides(year, mbox_file=mbox_file, print_log=False)
 
     # # сохраним полученные данные
-    # save_as_jsonfile(rides, f"_{year}.json")
+    # save_as_jsonfile(rides, f"_{year}.json", encoder=CustomJSONencoder)
     #
-    # # загрузим сохраненные данные
-    # rides = load_jsonfile(f"_{year}.json")
+    # загрузим сохраненные данные
+    # rides = load_jsonfile(f"_{year}.json", decoder=CustomJSONdecoder)
 
     print('Игого = ', sum(ride.ride_cost for ride in rides))
