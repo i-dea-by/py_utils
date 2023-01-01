@@ -4,7 +4,9 @@
 """
 
 import mailbox
+import re
 from datetime import datetime
+from email.message import EmailMessage
 from email.parser import BytesParser
 from email.policy import default
 from operator import attrgetter
@@ -31,7 +33,7 @@ def str2datetime(time_string: str) -> datetime:
     raise ValueError(f"Неведомый формат времени: {time_string}")
 
 
-def get_mail_content(message):
+def get_mail_content(message: EmailMessage) -> str:
     """
     возвращает как текст содержимое письма
     """
@@ -49,16 +51,17 @@ def get_mail_content(message):
     return content
 
 
-def log_printer(rides: list[RideData]):
+def log_printer(rides_list: list[RideData]):
     """ Функция печати данных из итогового списка поездок
     :return:
     """
-    for ride in rides:
+    for ride in rides_list:
         print(f"date:  : {ride.ride_dt.date()}, {ride.ride_dt.time()}, {ride.ride_week_day}\n"
               f"to:    : {ride.mail_to}\n"
               f"from   : {ride.mail_from}\n"
               f"subject: {ride.subject}\n"
-              f"price  : {ride.ride_cost if ride.ride_cost != 0 else 'FAILED'}\n"
+              f"price  : {ride.ride_cost if ride.ride_cost else 'FAILED'}\n"
+              f"km     : {ride.ride_distance if ride.ride_distance else 'FAILED'}\n"
               f"{'-' * 60}")
 
 
@@ -76,24 +79,42 @@ def get_data(message: mailbox.Message) -> RideData:
         mail_from=message.get('from'),
         ride_dt=dt,
         ride_week_day=dt.strftime("%A"),
-        ride_cost=0
+        ride_cost=0,
+        ride_distance=0
     )
 
     return result
 
 
-def parse_ride_cost(message: str) -> float:
-    """ Парсит стоимость поездки из html-тела письма
+def parse_ride_data(message: str) -> tuple:
+    """ Парсит стоимость поездки из html-тела письма и возвращает кортеж рассятояни и стоимости поездки
     :param message:
-    :return: float Стоимость поездки
+    :return: tuple (distance, price)
     """
+    # в 21 году километров не было !!!
+    # в 22 году иногда приходили глючные письма без данных, поэтому если нету, тогда 0
+
     soup = BeautifulSoup(message, 'lxml')
+
     price_raw = soup.find('td', class_='check__value check__value_type_price').text.strip()
     if price_raw:
-        price = price_raw.replace('\u202f', ' ').replace('\u2006', ' ').replace(',', '.').split()[0]
-        return float(price)
-    # в 22 году иногда приходили глючные письма
-    return .0
+        price = float(price_raw.replace('\u202f', ' ').replace('\u2006', ' ').replace(',', '.').split()[0])
+    else:
+        price = 0
+
+    distance_desc_td = [td for td in soup.find_all('td') if td.text.strip() == 'Время в пути']
+    if distance_desc_td:
+        distance_raw = distance_desc_td[0].find_next('td').find('p', class_='hint')
+        if distance_raw is None:
+            distance = 0
+        else:
+            distance_text = distance_raw.text.strip()  # '30,1 км'
+            distance = float(distance_text.replace(',', '.').split(' ')[0])
+    else:
+        # когда не нашло ничего
+        distance = 0
+
+    return distance, price
 
 
 def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> list[RideData]:
@@ -107,15 +128,13 @@ def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> li
     """
     mbox = mailbox.mbox(mbox_file, factory=BytesParser(policy=default).parse)
 
-    result_cost = 0
     result_data = []
 
     for message in tqdm(mbox, ncols=80, desc='Обработка писем'):
         message_data = get_data(message)
         if 'uber' in message_data.mail_from.lower() and message_data.ride_dt.year == year:
             content = get_mail_content(message)
-            message_data.ride_cost = parse_ride_cost(content)
-            result_cost += message_data.ride_cost
+            message_data.ride_distance, message_data.ride_cost = parse_ride_data(content)
             result_data.append(message_data)
 
     # сортирнём список поездок по дате
@@ -134,7 +153,7 @@ if __name__ == '__main__':
     print('Год : ', year)
     print(f"Загрузка файла {mbox_file} ...")
 
-    rides = collect_rides(year, mbox_file=mbox_file, print_log=False)
+    rides = collect_rides(year, mbox_file=mbox_file, print_log=True)
 
     # # сохраним полученные данные
     # save_as_jsonfile(rides, f"_{year}.json", encoder=CustomJSONencoder)
@@ -142,4 +161,10 @@ if __name__ == '__main__':
     # загрузим сохраненные данные
     # rides = load_jsonfile(f"_{year}.json", decoder=CustomJSONdecoder)
 
-    print('Игого = ', sum(ride.ride_cost for ride in rides))
+    all_km = all_cost = 0
+    for ride in rides:
+        all_km += ride.ride_distance
+        all_cost += ride.ride_cost
+
+    print('Игого деняк: ', all_cost)
+    print('Игого км: ', all_km)
