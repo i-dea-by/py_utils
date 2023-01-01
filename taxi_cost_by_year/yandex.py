@@ -8,14 +8,15 @@
     - Потом Далее, выбрать когда и как получать экспорт и нажать «Создать экспорт»
 
 История изменений:
+    23.01.01    - Яндекс.Такси в html-е оказывается даёт json-строку с данными поездки
     23.01.01    - с 23 года перешел на Яндекс.Такси
     22.12.30    - в 22 году  декабре, примерно, стали приходить глючные письма без данных, поэтому если нету, тогда 0
                 - в 21 году километров не было !!!
 
 """
-
+import json
 import mailbox
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.message import EmailMessage
 from email.parser import BytesParser
 from email.policy import default
@@ -26,6 +27,9 @@ from tqdm import tqdm
 
 from taxi_cost_by_year.json_files import PathLike, save_as_jsonfile, load_jsonfile
 from taxi_cost_by_year.typings import RideData, CustomJSONencoder, CustomJSONdecoder
+
+
+YANDEX_MAIL = 'taxi.yandex.com'
 
 
 def str2datetime(time_string: str) -> datetime:
@@ -43,7 +47,7 @@ def str2datetime(time_string: str) -> datetime:
     raise ValueError(f"Неведомый формат времени: {time_string}")
 
 
-def get_mail_content(message: EmailMessage) -> str:
+def get_mail_html_content(message: EmailMessage) -> str:
     """
     возвращает как текст содержимое письма
     """
@@ -66,65 +70,79 @@ def log_printer(rides_list: list[RideData]):
     :return:
     """
     for ride in rides_list:
-        print(f"date:  : {ride.ride_dt.date()}, {ride.ride_dt.time()}, {ride.ride_week_day}\n"
-              f"to:    : {ride.mail_to}\n"
-              f"from   : {ride.mail_from}\n"
-              f"subject: {ride.subject}\n"
-              f"price  : {ride.ride_cost if ride.ride_cost else 'FAILED'}\n"
-              f"km     : {ride.ride_distance if ride.ride_distance else 'FAILED'}\n"
+        print(f"Дата: {ride.ride_dt.date()}, {ride.ride_dt.time()}\n"
+              f"От: {ride.ride_from}\n"
+              f"До: {ride.ride_to}\n"
+              f"Длительность: {ride.duration}\n"
+              f"Расстояние: {ride.ride_distance}\n"
+              f"Цена: {ride.ride_cost}\n"
               f"{'-' * 60}")
 
 
-def get_data(message: mailbox.Message) -> RideData:
-    """ Достает из письма необходимые данные и возвращает датакласс с ними
-    :param message:
-    :return:
+def try_timedelta(duration: str) -> timedelta | None:
+    """ Переводит длительность поездки из строки в timedelta, или None если не удалось
+    :param duration: Длительность поездки, должно быть вида '0:8:25'
+    :return: timedelta длительности поездки или None если не получилось
     """
-    mail_date = message.get('date')
-    dt = str2datetime(mail_date)
+    try:
+        hours, minutes, seconds = duration.split(":")
+        return timedelta(
+            hours=float(hours),
+            minutes=float(minutes),
+            seconds=float(seconds)
+        )
+    except ValueError:
+        # return timedelta(0)
+        return None
+
+
+def try_datetime(date: str) -> datetime | None:
+    """ Переводит дату поездки в datetime, или None если не удалось
+    :param date: Дата поездки, должно быть вида '1.1.2023 2:15:8'
+    :return: datetime поездки или None если не получилось
+    """
+    try:
+        result = datetime.strptime(date, '%d.%m.%Y %H:%M:%S')
+        return result
+    except ValueError:
+        return None
+
+
+def extract_ride_data(html: str) -> RideData:
+    """ Достаёт из письма json-строку с данными поездки
+    Пример строки:
+    {
+        "arr": "город, улица, дом",
+        "cost": 12.7,
+        "dep": "город, улица, дом",
+        "car": "Kia Rio",
+        "time_dep": "0.0.0 2:19:53",
+        "city_dep": "Минск",
+        "trip_class": "econom",
+        "duration": "0:8:25",
+        "order_date": "1.1.2023 2:15:8",
+        "time_arr": "0.0.0 2:28:18",
+        "city_dep_geoid": 157,
+        "dist": 3.194
+    }
+
+    :param html: содержимое письма в формате html
+    :return: датаклас с данными поездки
+    """
+    soup = BeautifulSoup(html, 'lxml')
+    json_str = soup.find('script', {'type': 'application/ld+json'}).text.strip()
+    ride_json = json.loads(json_str)['taxi'][0]
 
     result = RideData(
-        mail_to=message.get('to'),
-        subject=message.get('subject', '<Unknown>'),
-        mail_from=message.get('from'),
-        ride_dt=dt,
-        ride_week_day=dt.strftime("%A"),
-        ride_cost=0,
-        ride_distance=0
+        ride_from=ride_json.get('dep'),
+        ride_to=ride_json.get('arr'),
+        duration=try_timedelta(ride_json.get('duration')),
+        ride_dt=try_datetime(ride_json.get('order_date')),
+        ride_cost=ride_json.get('cost'),
+        ride_distance=ride_json.get('dist')
     )
 
     return result
-
-
-def parse_ride_data(message: str) -> tuple:
-    """ Парсит стоимость поездки из html-тела письма и возвращает кортеж рассятояни и стоимости поездки
-    :param message:
-    :return: tuple (distance, price)
-    """
-    # в 21 году километров не было !!!
-    # в 22 году иногда приходили глючные письма без данных, поэтому если нету, тогда 0
-
-    soup = BeautifulSoup(message, 'lxml')
-
-    price_raw = soup.find('td', class_='report__value report__value_main').text.strip()
-    if price_raw:
-        price = float(price_raw.replace('\u202f', ' ').replace('\u2006', ' ').replace(',', '.').split()[0])
-    else:
-        price = 0
-
-    distance_desc_td = [td for td in soup.find_all('td') if td.text.strip() == 'Время в пути']
-    if distance_desc_td:
-        distance_raw = distance_desc_td[0].find_next('td').find('p', class_='hint')
-        if distance_raw is None:
-            distance = 0
-        else:
-            distance_text = distance_raw.text.strip()  # '30,1 км'
-            distance = float(distance_text.replace(',', '.').split(' ')[0])
-    else:
-        # когда не нашло ничего
-        distance = 0
-
-    return distance, price
 
 
 def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> list[RideData]:
@@ -141,11 +159,12 @@ def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> li
     result_data = []
 
     for message in tqdm(mbox, ncols=80, desc='Обработка писем'):
-        message_data = get_data(message)
-        if 'taxi.yandex.com' in message_data.mail_from.lower() and message_data.ride_dt.year == year:
-            content = get_mail_content(message)
-            message_data.ride_distance, message_data.ride_cost = parse_ride_data(content)
-            result_data.append(message_data)
+        mail_from = message.get('from').lower()
+        mail_dt = str2datetime(message.get('date'))
+        if YANDEX_MAIL in mail_from and mail_dt.year == year:
+            content = get_mail_html_content(message)
+            ride_data = extract_ride_data(content)
+            result_data.append(ride_data)
 
     # сортирнём список поездок по дате
     result_data.sort(key=attrgetter('ride_dt'))
@@ -163,12 +182,12 @@ if __name__ == '__main__':
     print('Год : ', year)
     print(f"Загрузка файла {mbox_file} ...")
 
-    rides = collect_rides(year, mbox_file=mbox_file, print_log=True)
+    rides = collect_rides(year, mbox_file=mbox_file, print_log=False)
 
     # # сохраним полученные данные
     # save_as_jsonfile(rides, f"_{year}.json", encoder=CustomJSONencoder)
     #
-    # загрузим сохраненные данные
+    # # загрузим сохраненные данные
     # rides = load_jsonfile(f"_{year}.json", decoder=CustomJSONdecoder)
 
     all_km = all_cost = 0
