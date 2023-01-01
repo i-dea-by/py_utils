@@ -34,5 +34,6 @@ old/
 --/
 --*.*
 _*.*
+!_version.py
 
 *.log
