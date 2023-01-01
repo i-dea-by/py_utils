@@ -1,20 +1,10 @@
 """
 скрипт анализирует mbox-файл полученный из экспорта почты с гугла
 ищет письма от Убера за указанный год и суммирует стоимость поездок взятых из тела письма
-
-Как получить файл .mbox:
-    - https://takeout.google.com/settings/takeout
-    - Выбрать только «Почта», можно уточнить что именно из ящика экспортировать нажав кнопку «Выбраны все данные почты»
-    - Потом Далее, выбрать когда и как получать экспорт и нажать «Создать экспорт»
-
-История изменений:
-    23.01.01    - с 23 года перешел на Яндекс.Такси
-    22.12.30    - в 22 году  декабре, примерно, стали приходить глючные письма без данных, поэтому если нету, тогда 0
-                - в 21 году километров не было !!!
-
 """
 
 import mailbox
+import re
 from datetime import datetime
 from email.message import EmailMessage
 from email.parser import BytesParser
@@ -24,8 +14,8 @@ from operator import attrgetter
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from taxt_cost_by_year.json_files import PathLike, save_as_jsonfile, load_jsonfile
-from taxt_cost_by_year.typings import RideData, CustomJSONencoder, CustomJSONdecoder
+from taxi_cost_by_year.json_files import PathLike, save_as_jsonfile, load_jsonfile
+from taxi_cost_by_year.typings import RideData, CustomJSONencoder, CustomJSONdecoder
 
 
 def str2datetime(time_string: str) -> datetime:
@@ -106,7 +96,7 @@ def parse_ride_data(message: str) -> tuple:
 
     soup = BeautifulSoup(message, 'lxml')
 
-    price_raw = soup.find('td', class_='report__value report__value_main').text.strip()
+    price_raw = soup.find('td', class_='check__value check__value_type_price').text.strip()
     if price_raw:
         price = float(price_raw.replace('\u202f', ' ').replace('\u2006', ' ').replace(',', '.').split()[0])
     else:
@@ -142,7 +132,7 @@ def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> li
 
     for message in tqdm(mbox, ncols=80, desc='Обработка писем'):
         message_data = get_data(message)
-        if 'taxi.yandex.com' in message_data.mail_from.lower() and message_data.ride_dt.year == year:
+        if 'uber' in message_data.mail_from.lower() and message_data.ride_dt.year == year:
             content = get_mail_content(message)
             message_data.ride_distance, message_data.ride_cost = parse_ride_data(content)
             result_data.append(message_data)
@@ -157,8 +147,8 @@ def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> li
 
 
 if __name__ == '__main__':
-    year = 2023
-    mbox_file = 'dont_vcs/inbox2023.mbox'
+    year = 2022
+    mbox_file = 'dont_vcs/inbox2022.mbox'
 
     print('Год : ', year)
     print(f"Загрузка файла {mbox_file} ...")
