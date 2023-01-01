@@ -18,6 +18,7 @@ class RideData:
     ride_dt: datetime
     ride_week_day: str
     ride_cost: float
+    ride_distance: float
 
 
 class CustomJSONencoder(json.JSONEncoder):
