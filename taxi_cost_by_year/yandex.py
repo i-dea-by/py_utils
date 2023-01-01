@@ -129,7 +129,7 @@ def extract_ride_data(html: str) -> RideData:
     :param html: содержимое письма в формате html
     :return: датаклас с данными поездки
     """
-    soup = BeautifulSoup(html, 'lxml')
+    soup = BeautifulSoup(html, 'html.parser')
     json_str = soup.find('script', {'type': 'application/ld+json'}).text.strip()
     ride_json = json.loads(json_str)['taxi'][0]
 
