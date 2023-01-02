@@ -17,7 +17,7 @@ tqdm
 Если `print_log=True`:
 ![alt-текст](https://github.com/i-dea-by/py_utils/blob/master/taxi_cost_by_year/taxi_log.gif?raw=true "Working with log")  
 Если `print_log=False`:
-![alt-текст](https://github.com/i-dea-by/py_utils/blob/master/taxi_cost_by_year/texi.gif?raw=true "Working")
+![alt-текст](https://github.com/i-dea-by/py_utils/blob/master/taxi_cost_by_year/taxi.gif?raw=true "Working")
 
 ### История изменений:
 #### 0.0.3 - 2023.01.01 
