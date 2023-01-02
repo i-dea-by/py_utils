@@ -192,10 +192,10 @@ if __name__ == '__main__':
     # print(f"Загружаем файл: _{year}.json")
     # rides = load_jsonfile(f"_{year}.json", decoder=CustomJSONdecoder)
 
-    all_km = all_cost = 0
+    total_km = total_cost = 0
     for ride in rides:
-        all_km += ride.ride_distance
-        all_cost += ride.ride_cost
+        total_km += ride.ride_distance
+        total_cost += ride.ride_cost
 
-    print('Игого деняк: ', all_cost)
-    print('Игого км: ', all_km)
+    print('Игого деняк: ', total_cost)
+    print('Игого км: ', total_km)
