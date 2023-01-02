@@ -14,9 +14,9 @@ tqdm
 ```
 
 ### Примеры результата работы
-Если `print_log=True`:
+Если `print_log=True`:  
 ![alt-текст](https://github.com/i-dea-by/py_utils/blob/master/taxi_cost_by_year/taxi_log.gif?raw=true "Working with log")  
-Если `print_log=False`:
+Если `print_log=False`:  
 ![alt-текст](https://github.com/i-dea-by/py_utils/blob/master/taxi_cost_by_year/taxi.gif?raw=true "Working")
 
 ### История изменений:
