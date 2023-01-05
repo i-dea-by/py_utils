@@ -185,15 +185,17 @@ if __name__ == '__main__':
     rides = collect_rides(year, mbox_file=mbox_file, print_log=False)
 
     # # сохраним полученные данные
+    # print(f"Сохраняем в файл: _{year}.json")
     # save_as_jsonfile(rides, f"_{year}.json", encoder=CustomJSONencoder)
     #
     # # загрузим сохраненные данные
+    # print(f"Загружаем файл: _{year}.json")
     # rides = load_jsonfile(f"_{year}.json", decoder=CustomJSONdecoder)
 
-    all_km = all_cost = 0
+    total_km = total_cost = 0
     for ride in rides:
-        all_km += ride.ride_distance
-        all_cost += ride.ride_cost
+        total_km += ride.ride_distance
+        total_cost += ride.ride_cost
 
-    print('Игого деняк: ', all_cost)
-    print('Игого км: ', all_km)
+    print('Игого деняк: ', total_cost)
+    print('Игого км: ', total_km)
