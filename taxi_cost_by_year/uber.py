@@ -4,7 +4,6 @@
 """
 
 import mailbox
-import re
 from datetime import datetime
 from email.message import EmailMessage
 from email.parser import BytesParser
@@ -15,7 +14,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from taxi_cost_by_year.json_files import PathLike, save_as_jsonfile, load_jsonfile
-from taxi_cost_by_year.typings import RideData, CustomJSONencoder, CustomJSONdecoder
+from taxi_cost_by_year.typings import RideDataUber as RideData, CustomJSONencoder, CustomJSONdecoder
 
 
 def str2datetime(time_string: str) -> datetime:
@@ -94,7 +93,7 @@ def parse_ride_data(message: str) -> tuple:
     # в 21 году километров не было !!!
     # в 22 году иногда приходили глючные письма без данных, поэтому если нету, тогда 0
 
-    soup = BeautifulSoup(message, 'lxml')
+    soup = BeautifulSoup(message, 'html.parser')
 
     price_raw = soup.find('td', class_='check__value check__value_type_price').text.strip()
     if price_raw:
@@ -148,7 +147,7 @@ def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> li
 
 if __name__ == '__main__':
     year = 2022
-    mbox_file = 'dont_vcs/inbox2022.mbox'
+    mbox_file = 'dont_vcs/inbox2023.mbox'
 
     print('Год : ', year)
     print(f"Загрузка файла {mbox_file} ...")
