@@ -23,5 +23,5 @@ def main():
 
 
 if __name__ == '__main__':
-    logger.add("the_bat.log", rotation="1 day", level='DEBUG')
+    logger.add("the_bat.log", level='DEBUG')
     main()
