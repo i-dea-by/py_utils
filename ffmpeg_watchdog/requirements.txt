@@ -1,0 +1,3 @@
+python-decouple
+ffmpeg-progress-yield
+ffmpeg-python
