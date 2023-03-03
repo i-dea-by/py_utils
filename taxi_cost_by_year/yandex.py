@@ -191,6 +191,9 @@ if __name__ == '__main__':
     # print(f"Загружаем файл: _{year}.json")
     # rides = load_jsonfile(f"_{year}.json", decoder=CustomJSONdecoder)
 
+    # # распечатаем поездки
+    # log_printer(rides)
+
     total_km = total_cost = 0
     for ride in rides:
         total_km += ride.ride_distance
