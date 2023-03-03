@@ -1,16 +1,19 @@
 """
 скрипт анализирует mbox-файл полученный из экспорта почты с гугла
-ищет письма от Убера за указанный год и суммирует стоимость поездок взятых из тела письма
+ищет письма от Я.Такси за указанный год и суммирует стоимость поездок взятых 
+из тела письма
 
 Как получить файл .mbox:
     - https://takeout.google.com/settings/takeout
-    - Выбрать только «Почта», можно уточнить что именно из ящика экспортировать нажав кнопку «Выбраны все данные почты»
+    - Выбрать только «Почта», можно уточнить что именно из ящика экспортировать 
+      нажав кнопку «Выбраны все данные почты»
     - Потом Далее, выбрать когда и как получать экспорт и нажать «Создать экспорт»
 
 История изменений:
     23.01.01    - Яндекс.Такси в html-е оказывается даёт json-строку с данными поездки
     23.01.01    - с 23 года перешел на Яндекс.Такси
-    22.12.30    - в 22 году  декабре, примерно, стали приходить глючные письма без данных, поэтому если нету, тогда 0
+    22.12.30    - в 22 году  декабре, примерно, стали приходить глючные письма 
+                  без данных, поэтому если нету, тогда 0
                 - в 21 году километров не было !!!
 
 """
@@ -25,8 +28,8 @@ from operator import attrgetter
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from taxi_cost_by_year.json_files import PathLike, save_as_jsonfile, load_jsonfile
-from taxi_cost_by_year.typings import RideData, CustomJSONencoder, CustomJSONdecoder
+from json_files import PathLike, save_as_jsonfile, load_jsonfile
+from typings import RideData, CustomJSONencoder, CustomJSONdecoder
 
 
 YANDEX_MAIL = 'taxi.yandex.com'
@@ -34,8 +37,6 @@ YANDEX_MAIL = 'taxi.yandex.com'
 
 def str2datetime(time_string: str) -> datetime:
     """ Преобразует строку в формат datetime. Если не удается вызывает исключение ValueError
-    :param time_string:
-    :return: datetime
     """
     # форматы используемые в письмах
     time_formats = ['%a, %d %b %Y %H:%M:%S %z', '%a, %d %b %Y %H:%M:%S %z (%Z)']
@@ -48,8 +49,7 @@ def str2datetime(time_string: str) -> datetime:
 
 
 def get_mail_html_content(message: EmailMessage) -> str:
-    """
-    возвращает как текст содержимое письма
+    """  Возвращает как текст содержимое письма
     """
     if message.is_multipart():
         contents = []
@@ -67,7 +67,6 @@ def get_mail_html_content(message: EmailMessage) -> str:
 
 def log_printer(rides_list: list[RideData]):
     """ Функция печати данных из итогового списка поездок
-    :return:
     """
     for ride in rides_list:
         print(f"Дата: {ride.ride_dt.date()}, {ride.ride_dt.time()}\n"
@@ -196,6 +195,8 @@ if __name__ == '__main__':
     for ride in rides:
         total_km += ride.ride_distance
         total_cost += ride.ride_cost
+
+    total_cost += 19.7  # по старой памяти вызвал убер (:
 
     print('Игого деняк: ', total_cost)
     print('Игого км: ', total_km)
