@@ -24,19 +24,23 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 from email.policy import default
 from operator import attrgetter
+from pathlib import Path
+from typing import TypeVar
 
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from json_files import PathLike, save_as_jsonfile, load_jsonfile
-from typings import RideData, CustomJSONencoder, CustomJSONdecoder
+from typings import RideData
 
+
+PathLike = TypeVar("PathLike", str, Path)
 
 YANDEX_MAIL = 'taxi.yandex.com'
 
 
 def str2datetime(time_string: str) -> datetime:
-    """ Преобразует строку в формат datetime. Если не удается вызывает исключение ValueError
+    """ Преобразует строку в формат datetime. 
+        Если не удается вызывает исключение ValueError
     """
     # форматы используемые в письмах
     time_formats = ['%a, %d %b %Y %H:%M:%S %z', '%a, %d %b %Y %H:%M:%S %z (%Z)']
@@ -79,7 +83,8 @@ def log_printer(rides_list: list[RideData]):
 
 
 def try_timedelta(duration: str) -> timedelta | None:
-    """ Переводит длительность поездки из строки в timedelta, или None если не удалось
+    """ Переводит длительность поездки из строки в timedelta, 
+        или None если не удалось
     :param duration: Длительность поездки, должно быть вида '0:8:25'
     :return: timedelta длительности поездки или None если не получилось
     """
@@ -116,12 +121,12 @@ def extract_ride_data(html: str) -> RideData:
         "dep": "город, улица, дом",
         "car": "Kia Rio",
         "time_dep": "0.0.0 2:19:53",
-        "city_dep": "Минск",
+        "city_dep": "Город",
         "trip_class": "econom",
         "duration": "0:8:25",
         "order_date": "1.1.2023 2:15:8",
         "time_arr": "0.0.0 2:28:18",
-        "city_dep_geoid": 157,
+        "city_dep_geoid": 123,
         "dist": 3.194
     }
 
@@ -144,9 +149,11 @@ def extract_ride_data(html: str) -> RideData:
     return result
 
 
-def collect_rides(year: int, mbox_file: PathLike, print_log: bool = False) -> list[RideData]:
-    """ Проходит по всем письмам в файле .mbox, находит письма от убера за нужный год,
-    собирает их и сортирует их по дате
+def collect_rides(
+        year: int, mbox_file: PathLike, print_log: bool = False
+) -> list[RideData]:
+    """ Проходит по всем письмам в файле .mbox, находит письма от такси 
+        за нужный год, собирает их и сортирует их по дате
 
     :param year: год за который ищутся письма
     :param print_log: если True - печатает данные писем, если False - выводит строку прогресса
@@ -183,23 +190,10 @@ if __name__ == '__main__':
 
     rides = collect_rides(year, mbox_file=mbox_file, print_log=False)
 
-    # # сохраним полученные данные
-    # print(f"Сохраняем в файл: _{year}.json")
-    # save_as_jsonfile(rides, f"_{year}.json", encoder=CustomJSONencoder)
-    #
-    # # загрузим сохраненные данные
-    # print(f"Загружаем файл: _{year}.json")
-    # rides = load_jsonfile(f"_{year}.json", decoder=CustomJSONdecoder)
-
-    # # распечатаем поездки
-    # log_printer(rides)
-
     total_km = total_cost = 0
     for ride in rides:
         total_km += ride.ride_distance
         total_cost += ride.ride_cost
-
-    total_cost += 19.7  # по старой памяти вызвал убер (:
 
     print('Игого деняк: ', total_cost)
     print('Игого км: ', total_km)
