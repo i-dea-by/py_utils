@@ -1,0 +1,25 @@
+import csv
+from typings import DCvCard
+
+
+def import_from_vcs(filename: str) -> list[DCvCard]:
+    result = []
+    with open(filename, 'r', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        for row in reader:
+            result.append(
+                DCvCard(
+                    displayname=row['ФИО_рус'],
+                    title=row['Должность_рус'],
+                    # + удалим пробелы из номера телефона
+                    cellphone=row['Моб'].replace(' ', ''),
+                    email=row['почта'],
+                    workphone='+123456789',
+                    org='OrgName',
+                    country='Республика Вейшнория',
+                    zipcode='123456',
+                    city='г. Упячинск',
+                    street='ул. Ленина, 1, оф. 2',
+                )
+            )
+    return result
