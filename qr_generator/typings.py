@@ -11,9 +11,9 @@ class DCvCard:
     name: str | None = None  # N - фамилия; имя; отчество (дополнительные имена); префиксы; суффиксы
     nickname: str | None = None
     email: str | None = None
-    phone: str | None = None
-    fax: str | None = None
-    videophone: str | None = None
+    phone: str | list[str] |  None = None
+    fax: str | list | None = None
+    videophone: str | list[str] | None = None
     memo: str | None = None
     birthday: str | date | None = None
     url: str | None = None
@@ -30,10 +30,10 @@ class DCvCard:
     source: str | None = None
     rev: str | date | None = None
     title: str | None = None
-    photo_uri: str | None = None
-    cellphone: str | None = None
-    homephone: str | None = None
-    workphone: str | None = None
+    photo_uri: str | list[str] | None = None
+    cellphone: str | list[str] | None = None
+    homephone: str | list[str] | None = None
+    workphone: str | list[str] | None = None
 
     def __post_init__(self):
         if self.name is None:
